@@ -1,0 +1,35 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% block title %} Профайл пользователя {{ author.get_full_name }} {% endblock %}
+{% block content %}
+      <div class="container py-5">
+        <h1>Все посты пользователя: {{ author.get_full_name }} <!--Лев Толстой--> </h1>
+        <h3>Всего постов: {{ post_count }} </h3>   
+        <article>
+          <ul>
+            <li>
+              Автор: {{ author.get_full_name }} <!--Лев Толстой-->
+              <a href="<!-- фиг знает как сделать; должно вести на первую страницу?-->">все посты пользователя</a>
+            </li>
+          </ul>
+
+        </article>
+        <article>
+          {% for post in page_obj %}
+            <ul>
+              <li>
+                Дата публикации: {{ post.pub_date|date:"d E Y" }}
+              </li>
+            </ul>
+            <p>{{ post.text }}</p>
+              {% if post.group %}
+                <p> <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a></p>
+              {% endif %}
+            <a href="{% url 'posts:post_detail' post.id %}">подробная информация </a>
+            {% if not forloop.last %}<hr>{% endif %}
+          {% endfor %} 
+        </article>
+        <hr> 
+        {% include 'posts/includes/paginator.html' %}
+      </div>
+{% endblock %}

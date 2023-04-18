@@ -1,0 +1,24 @@
+<!-- templates/base.html -->
+{% load static %}
+<!DOCTYPE html> <!-- Используется html 5 версии -->
+<html lang="ru"> <!-- Язык сайта - русский -->
+  <head>
+    <title>
+      {% block title %} Потерялся заголовок {% endblock %}
+    </title>
+  </head>
+  <body>       
+    <header>      
+      {% include 'includes/header.html' %}
+    </header>
+    <main>
+      {% block content %} 
+      {% block header %} {% endblock %}
+      Контент не подвезли
+      {% endblock %}
+    </main>
+    <footer>
+      {% include 'includes/footer.html' %} 
+    </footer>
+  </body>
+</html> 
