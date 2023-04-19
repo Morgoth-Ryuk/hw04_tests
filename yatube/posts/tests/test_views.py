@@ -22,10 +22,10 @@ class ViewPostsTests(TestCase):
             author=cls.author,
             group=cls.group,
         )
+        cls.user = User.objects.create_user(username='Test')
 
     def setUp(self):
         self.guest_client = Client()
-        self.user = User.objects.create_user(username='Test')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.author_client = Client()
