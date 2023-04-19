@@ -1,5 +1,7 @@
 from django.test import TestCase, Client
 from ..models import User, Post, Group
+from django.urls import reverse
+from http import HTTPStatus
 
 
 class StaticURLTests(TestCase):
@@ -28,11 +30,17 @@ class StaticURLTests(TestCase):
     def test_url_exists_at_desired_location_unauthorized_client(self):
         """Страницы доступные любому пользователю."""
         url_names = {
-            '/': 200,
-            f'/group/{self.post.group.slug}/': 200,
-            f'/profile/{self.post.author.username}/': 200,
-            f'/posts/{self.post.id}/': 200,
-            '/notexist_page/': 404,
+            reverse('posts:index'): HTTPStatus.OK.value,
+            reverse(
+                'posts:group_list', kwargs={'slug': self.group.slug}
+            ): HTTPStatus.OK.value,
+            reverse(
+                'posts:profile', kwargs={'username': self.author}
+            ): HTTPStatus.OK.value,
+            reverse(
+                'posts:post_detail', kwargs={'post_id': self.post.id}
+            ): HTTPStatus.OK.value,
+            '/notexist_page/': HTTPStatus.NOT_FOUND.value,
         }
         for adress, code in url_names.items():
             with self.subTest(code=code):
@@ -45,20 +53,28 @@ class StaticURLTests(TestCase):
         if self.author:
             self.assertEqual(
                 self.author_client.get(
-                    f'/posts/{self.post.id}/edit/').status_code,
-                200
+                    reverse(
+                        'posts:post_edit', kwargs={'post_id': self.post.id}
+                    )
+                ).status_code, HTTPStatus.OK.value
             )
         self.assertEqual(
-            self.authorized_client.get('/create/').status_code,
-            200
+            self.authorized_client.get(
+                reverse('posts:post_create')
+            ).status_code, HTTPStatus.OK.value
         )
 
     def test_posts_urls_redirect_anonymous_client(self):
         """Перенаправление анонимного пользователя."""
         urls_names = {
-            '/create/': '/auth/login/?next=/create/',
-            f'/posts/{self.post.id}/edit/': (
-                f'/auth/login/?next=/posts/{self.post.id}/edit/')
+            reverse('posts:post_create'): reverse(
+                'users:login'
+            ) + '?next=' + reverse('posts:post_create'),
+            reverse(
+                'posts:post_edit', kwargs={'post_id': self.post.id}
+            ): reverse('users:login') + '?next=' + reverse(
+                'posts:post_edit', kwargs={'post_id': self.post.id}
+            )
         }
         for adress, redirect in urls_names.items():
             with self.subTest(adress=adress):
@@ -70,22 +86,34 @@ class StaticURLTests(TestCase):
         """Перенаправление авторизованного пользователя."""
         self.assertRedirects(
             self.authorized_client.get(
-                f'/posts/{self.post.id}/edit/', follow=True),
-            f'/posts/{self.post.id}/'
+                reverse(
+                    'posts:post_edit', kwargs={'post_id': self.post.id}
+                ), follow=True),
+            reverse(
+                'posts:post_detail', kwargs={'post_id': self.post.id}
+            )
         )
 
     def test_posts_urls_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
         url_names = {
             '/': 'posts/index.html',
-            f'/group/{self.group.slug}/': 'posts/group_list.html',
-            f'/profile/{self.author}/': 'posts/profile.html',
-            f'/posts/{self.post.id}/': 'posts/post_detail.html',
-            '/create/': 'posts/create_post.html',
+            reverse(
+                'posts:group_list', kwargs={'slug': self.group.slug}
+            ): 'posts/group_list.html',
+            reverse(
+                'posts:profile', kwargs={'username': self.author}
+            ): 'posts/profile.html',
+            reverse(
+                'posts:post_detail', kwargs={'post_id': self.post.id}
+            ): 'posts/post_detail.html',
+            reverse('posts:post_create'): 'posts/create_post.html',
         }
         if self.author:
             self.assertTemplateUsed(
-                self.author_client.get(f'/posts/{self.post.id}/edit/'),
+                self.author_client.get(reverse(
+                    'posts:post_edit', kwargs={'post_id': self.post.id}
+                )),
                 'posts/create_post.html'
             )
         for adress, template in url_names.items():

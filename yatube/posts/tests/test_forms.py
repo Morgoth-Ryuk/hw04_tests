@@ -19,10 +19,10 @@ class PostCreateFormTests(TestCase):
             author=cls.author,
             group=cls.group,
         )
+        cls.user = User.objects.create_user(username='Test')
 
     def setUp(self):
         self.guest_client = Client()
-        self.user = User.objects.create_user(username='Test')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
         self.author_client = Client()
@@ -33,7 +33,6 @@ class PostCreateFormTests(TestCase):
         posts_count = Post.objects.count()
         form_data = {
             'text': 'Тестовая запись1',
-            'author': self.author,
             'group': self.group.id,
         }
         response = self.author_client.post(
@@ -47,8 +46,8 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(Post.objects.count(), posts_count + 1)
         self.assertTrue(
             Post.objects.filter(
-                group=self.group.id,
-                text='Тестовая запись1',
+                group=form_data['group'],
+                text=form_data['text'],
                 author=self.author
             ).exists()
         )
@@ -73,13 +72,13 @@ class PostCreateFormTests(TestCase):
         self.assertEqual(Post.objects.count(), posts_count)
         self.assertTrue(
             Post.objects.filter(
-                text='Измененный тестовый пост',
-                group=self.group.id
+                group=form_data['group'],
+                text=form_data['text'],
             ).exists()
         )
         self.assertEqual(
             Post.objects.filter(
-                text='Измененный тестовый пост',
-                group=self.group.id
+                group=form_data['group'],
+                text=form_data['text'],
             ).get().id, response.context['post'].id
         )
