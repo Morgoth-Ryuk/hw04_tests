@@ -97,7 +97,7 @@ class StaticURLTests(TestCase):
     def test_posts_urls_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
         url_names = {
-            '/': 'posts/index.html',
+            reverse('posts:index'): 'posts/index.html',
             reverse(
                 'posts:group_list', kwargs={'slug': self.group.slug}
             ): 'posts/group_list.html',
